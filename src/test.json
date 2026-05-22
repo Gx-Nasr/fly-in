@@ -1,7 +1,4 @@
-import json
-from data_classes import Zone, Drone, connection
-
-data_dict = {
+{
     "nb_drones": 5,
     "start_hub": {
         "name": "start",
@@ -91,44 +88,3 @@ data_dict = {
         }
     }
 }
-
-
-class GraphInit:
-    def __init__(self, data_dict):
-        self.graph = self.creat_list_of_zones(data_dict)
-
-
-    def creat_zone(self, data):
-        name = data["name"]
-        x, y = data["x"], data["y"]
-        zone_type = data["zone"]
-        color = data["color"]
-        max_drones = data["max_drones"]
-
-
-        return Zone(name, x, y, zone_type, color, max_drones, 0)
-
-
-    def creat_graph(self, data_dict):
-        zones = self.creat_list_of_zones(data_dict)
-        
-
-    def creat_list_of_zones(self, data_dict) -> list[Zone]:
-        zones = []
-        start_zone = self.creat_zone(data_dict["start_hub"])
-        zones.append(start_zone)
-        for hub in data_dict["hubs"].values():
-            zone = self.creat_zone(hub)
-            zones.append(zone)
-        end_zone = self.creat_zone(data_dict["end_hub"])
-        zones.append(end_zone)
-
-        return zones
-        
-        
-
-
-
-
-
-p = GraphInit(data_dict)

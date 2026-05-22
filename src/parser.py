@@ -270,13 +270,14 @@ class Parser:
         defined_zones = [
             hub_dict[start_hub_name]["name"]
         ]
-
+        e_n_d = 0
         while index < data_length:
             hub = data[index].split(":", 1)
 
             if hub[0] != "hub":
 
                 if hub[0] == "end_hub":
+                    e_n_d = 1
                     hub_dict[hub[0]] = self.get_metadata(hub[1])
                     max_drones = hub_dict[hub[0]]["max_drones"]
                     zone_name = hub_dict[hub[0]]["zone"]
@@ -309,12 +310,9 @@ class Parser:
                     )
 
                     index += 1
-                    break
+                    continue
                 else:
-                    print(f"Error in line {index + 1}: nvalid hub definition syntax.",
-                        file=sys.stderr
-                    )
-                    exit(1)
+                    break
 
             hub_data = self.get_metadata(hub[1])
 
@@ -333,15 +331,18 @@ class Parser:
 
             if coordinates in coordinates_list:
                 print("Duplicate coordinates", file=sys.stderr)
+                exit(1)
 
             coordinates_list.append(coordinates)
-            name = hub_data.pop("name")
+            name = hub_data["name"]
             defined_zones.append(name)
 
             hub_dict["hubs"][name] = hub_data
 
             index += 1
-
+        if not e_n_d:
+            print("Error: end_hub are missde")
+            exit(1)
         hub_dict["connections"] = {}
 
         connection_id = 0
@@ -391,3 +392,9 @@ class Parser:
             index += 1
 
         return hub_dict
+
+
+parser = Parser(sys.argv[1])
+
+with open("test.json", "w") as file:
+    json.dump(parser.data, file, indent=4)
