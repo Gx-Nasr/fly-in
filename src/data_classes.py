@@ -1,45 +1,48 @@
-from dataclasses import dataclass
-
-
-@dataclass
-class Drone:
-    nb_drons: int
-    drone_id: int
-    zone: str
-    is_transit: bool
+from typing import List
+from dataclasses import dataclass, field
 
 
 @dataclass
 class Zone:
-    """
     name: str
     x: int
     y: int
     zone_type: str
-    color: str
+    color: str | None
     max_drones: int
-    drones: int
-    """
+    current_drones: int = 0
 
-    name: str
-    x: int
-    y: int
-    zone_type: str
-    color: str
-    max_drones: int
-    drones: int
+
 
 @dataclass
 class Connection:
-    zone1: Zone
-    zone2: Zone
+    from_zone: Zone
+    to_zone: Zone
     max_link_capacity: int
 
 
 @dataclass
-class Graph:
-    zones: dict[str, Zone]
-    adjacency: dict[str, list[tuple[Zone, Connection]]]  # هنا الneighbors
+class Drone:
+    id_drone: int
+    current_zone: Zone
+    path: List[str] = field(default_factory=list)
+
+@dataclass
+class GraphData:
+    nb_drones: int
+    all_drones: List[Drone]
+    zones_dict: dict[str, Zone]
+    connections: List[Connection]
     start: Zone
     end: Zone
-    nb_drones: int
+    turns: int = 0
+
+    def get_connections(self, zone):
+        neighbors = []
+        for connect in self.connections:
+            if zone == connect.from_zone:
+                neighbors.append(connect)
+            elif zone == connect.to_zone:
+                neighbors.append(connect)
+
+        return neighbors
