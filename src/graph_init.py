@@ -1,4 +1,4 @@
-from data_classes import Zone, Drone, Connection, GraphData
+from .data_classes import Zone, Drone, Connection, GraphData
 
 
 class GraphInit:

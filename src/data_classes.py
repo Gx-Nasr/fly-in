@@ -14,6 +14,7 @@ class Zone:
 
 
 
+
 @dataclass
 class Connection:
     from_zone: Zone
@@ -25,7 +26,7 @@ class Connection:
 class Drone:
     id_drone: int
     current_zone: Zone
-    path: List[str] = field(default_factory=list)
+    path: dict[int, Zone] = field(default_factory=dict)
 
 @dataclass
 class GraphData:
@@ -37,11 +38,24 @@ class GraphData:
     end: Zone
     turns: int = 0
 
+
+    def move_cost(self, zone):
+        if zone.zone_type == "restricted":
+            return 2
+        return 1
+
+
+    def get_neighbor(self, connection, zone):
+        if connection.from_zone == zone:
+            return connection.to_zone
+        return connection.from_zone
+
     def get_connections(self, zone):
         neighbors = []
         for connect in self.connections:
             if zone == connect.from_zone:
                 neighbors.append(connect)
+
             elif zone == connect.to_zone:
                 neighbors.append(connect)
 

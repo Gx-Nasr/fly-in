@@ -1,5 +1,4 @@
 from typing import List
-import json
 import sys
 
 
@@ -392,9 +391,3 @@ class Parser:
             index += 1
 
         return hub_dict
-
-
-parser = Parser(sys.argv[1])
-
-with open("test.json", "w") as file:
-    json.dump(parser.data, file, indent=4)
