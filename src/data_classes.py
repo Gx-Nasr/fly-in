@@ -2,7 +2,7 @@ from typing import List
 from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(frozen=True)
 class Zone:
     name: str
     x: int
@@ -26,7 +26,7 @@ class Connection:
 class Drone:
     id_drone: int
     current_zone: Zone
-    path: dict[int, Zone] = field(default_factory=dict)
+    path: List[tuple] = field(default_factory=list)
 
 @dataclass
 class GraphData:

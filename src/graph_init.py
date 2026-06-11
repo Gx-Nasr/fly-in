@@ -5,7 +5,7 @@ class GraphInit:
     def __init__(self, data_dict):
         self.graph = self.creat_graph(data_dict)
 
-    def creat_zone(self, zone_data):
+    def creat_zone(self, zone_data, drones=0):
         name = zone_data["name"]
         x = zone_data["x"]
         y = zone_data["y"]
@@ -13,7 +13,7 @@ class GraphInit:
         color = zone_data["color"]
         max_drones = zone_data["max_drones"]
 
-        return Zone(name, x, y, zone_type, color, max_drones)
+        return Zone(name, x, y, zone_type, color, max_drones, drones)
     
     def creat_connection(self, connection_data, zones):
         from_zone = connection_data["connection"][0]
@@ -35,8 +35,7 @@ class GraphInit:
     def creat_graph(self, data_dict):
         zones = {}
         nb_drones = data_dict["nb_drones"]
-        start_zone = self.creat_zone(data_dict["start_hub"])
-        start_zone.current_drones = nb_drones
+        start_zone = self.creat_zone(data_dict["start_hub"], nb_drones)
         zones[start_zone.name] = start_zone
         for zone in data_dict["hubs"].values():
             zone = self.creat_zone(zone)

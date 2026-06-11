@@ -1,12 +1,12 @@
-from data_classes import GraphData
+from .data_classes import GraphData
 import heapq
 
 
 class PathFinding:
     def __init__(self, graph):
         self.graph: GraphData = graph
-        self.start = self.graph.start
-        self.end = self.graph.end
+        self.start = graph.start
+        self.end = graph.end
         self.zone_reservations = {}
         self.capacity_reservations = {}
 
@@ -16,16 +16,17 @@ class PathFinding:
         distances = {}
         parent = {}
         pq = []
+        counter = 0
 
         start_state = (self.start, turn)
         distances[start_state] = turn
         parent[start_state] = None
-        heapq.heappush(pq, (turn, start_state))
+        heapq.heappush(pq, (turn, 0, counter,start_state))
         visitions = set()
 
 
         while pq:
-            all_turns, state = heapq.heappop(pq)
+            _, _1, _2, state = heapq.heappop(pq)
             current_zone, current_turn = state
 
             if state in visitions:
@@ -39,6 +40,7 @@ class PathFinding:
                     path.append(zone)
                     zone = parent[zone]
                 path.reverse()
+                print(parent)
                 return path
 
             wait_turn = current_turn + 1
@@ -48,11 +50,16 @@ class PathFinding:
                 if distances.get(wait_state, -1) == -1:
                     distances[wait_state] = wait_turn
                     parent[wait_state] = state
-                    heapq.heappush(pq, (wait_turn, wait_state))
+                    counter += 1
+                    heapq.heappush(pq, (wait_turn, 1, counter, wait_state))
 
             connections = self.graph.get_connections(current_zone)
             for connection in connections:
                 neighbor = self.graph.get_neighbor(connection, current_zone)
+
+                if neighbor.zone_type == "blocked":
+                    continue
+
                 cost = self.graph.move_cost(neighbor)
                 turns = current_turn + cost
 
@@ -77,7 +84,11 @@ class PathFinding:
                 if distances.get(next_state, -1) == -1:
                     distances[next_state] = turns
                     parent[next_state] = state
-                    heapq.heappush(pq, (turns, next_state))
+                    zone_cost = 0
+                    if neighbor.zone_type == "priority":
+                        zone_cost = -1
+                    counter += 1
+                    heapq.heappush(pq, (turns, zone_cost, counter,next_state))
         return []
 
     def reserve(self, path):
@@ -97,6 +108,10 @@ class PathFinding:
                         self.capacity_reservations[(z1, z2, t)] = self.capacity_reservations.get((z1, z2, t), 0) + 1
 
 
+    def print_output(self, path):
+            pass
+
+
 
     def get_drones_path(self):
 
@@ -104,9 +119,9 @@ class PathFinding:
             path = self.dijkstra()
             if not path:
                 raise ValueError("We can't find the path check your map are valid")
-
+            turns = 0
             for t in path:
-                zone, turn = t
-                drone.path[turn] = zone
-
+                drone.path.append(t)
+                turns += 1
             self.reserve(path)
+        self.print_output()

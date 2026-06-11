@@ -1,5 +1,6 @@
 from .parser import Parser
 from .graph_init import GraphInit
+from .dijkstra import PathFinding
 import sys
 import json
 
@@ -10,4 +11,6 @@ with open("test.json", "w") as file:
 
 graph = GraphInit(parser.data)
 
-print(graph.graph)
+djikstra = PathFinding(graph.graph)
+
+djikstra.get_drones_path()

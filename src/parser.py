@@ -278,13 +278,7 @@ class Parser:
                 if hub[0] == "end_hub":
                     e_n_d = 1
                     hub_dict[hub[0]] = self.get_metadata(hub[1])
-                    max_drones = hub_dict[hub[0]]["max_drones"]
                     zone_name = hub_dict[hub[0]]["zone"]
-                    if (max_drones < number_of_drones):
-                        print("max_drones in end hub must be >= nb_drones",
-                              file=sys.stderr
-                        )
-                        exit(1)
 
                     if (zone_name not in valid_zone_types):
                         print(
