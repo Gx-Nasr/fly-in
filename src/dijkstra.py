@@ -1,5 +1,6 @@
 from .data_classes import GraphData
 import heapq
+import json
 
 
 class PathFinding:
@@ -35,12 +36,15 @@ class PathFinding:
 
             if current_zone == self.graph.end:
                 path = []
-                zone = state
-                while zone is not None:
-                    path.append(zone)
-                    zone = parent[zone]
+                old_turn = state[1]
+                while state is not None:
+                    if old_turn == state[1] + 2:
+                        path.append(old_state)
+                    path.append(state)
+                    old_turn = state[1]
+                    old_state = state
+                    state = parent[state]
                 path.reverse()
-                print(parent)
                 return path
 
             wait_turn = current_turn + 1
@@ -89,29 +93,48 @@ class PathFinding:
                         zone_cost = -1
                     counter += 1
                     heapq.heappush(pq, (turns, zone_cost, counter,next_state))
-        return []
+        return None
+
 
     def reserve(self, path):
+        current_zone, current_turn = (0, 0)
         for i in range(len(path)):
-            current_zone, current_turn = path[i]
+            if (current_zone, current_turn) != path[i]:
+                current_zone, current_turn = path[i]
 
-            if current_zone != self.start and current_zone != self.end:
-                self.zone_reservations[(current_zone.name, current_turn)] = self.zone_reservations.get((current_zone.name, current_turn), 0) + 1
+                if current_zone != self.start and current_zone != self.end:
+                    self.zone_reservations[(current_zone.name, current_turn)] = self.zone_reservations.get((current_zone.name, current_turn), 0) + 1
 
-            if i < len(path) - 1:
-                next_zone, next_turn = path[i + 1]
+                if i < len(path) - 1:
+                    next_zone, next_turn = path[i + 1]
 
-                if current_zone.name != next_zone.name:
-                    z1, z2 = sorted([current_zone.name, next_zone.name])
+                    if current_zone.name != next_zone.name:
+                        z1, z2 = sorted([current_zone.name, next_zone.name])
 
-                    for t in range(current_turn, next_turn):
-                        self.capacity_reservations[(z1, z2, t)] = self.capacity_reservations.get((z1, z2, t), 0) + 1
-
-
-    def print_output(self, path):
-            pass
+                        for t in range(current_turn, next_turn):
+                            self.capacity_reservations[(z1, z2, t)] = self.capacity_reservations.get((z1, z2, t), 0) + 1
 
 
+    def print_output(self, drones):
+        max_turn = 0
+        check_list = {}
+        for drone in drones:
+            path_len = len(drone.path)
+            if path_len > max_turn:
+                max_turn = path_len
+            check_list[drone.id_drone] = drone.path[0][0]
+
+        for t in range(1, max_turn):
+            for drone in drones:
+                drone_len = len(drone.path)
+                if t < drone_len:
+                    if check_list[drone.id_drone] != drone.path[t][0]:
+                        if t + 1 < drone_len and drone.path[t+1] == drone.path[t]:
+                            print(f"D{drone.id_drone+1}-{drone.path[t-1][0].name}-{drone.path[t][0].name}", end=" ")
+                        else:
+                            print(f"D{drone.id_drone+1}-{drone.path[t][0].name}", end=" ")
+                            check_list[drone.id_drone] = drone.path[t][0]
+            print()
 
     def get_drones_path(self):
 
@@ -119,9 +142,8 @@ class PathFinding:
             path = self.dijkstra()
             if not path:
                 raise ValueError("We can't find the path check your map are valid")
-            turns = 0
-            for t in path:
-                drone.path.append(t)
-                turns += 1
+
+            drone.path = path
             self.reserve(path)
-        self.print_output()
+
+        self.print_output(self.graph.all_drones)

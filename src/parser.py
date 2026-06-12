@@ -1,5 +1,6 @@
 from typing import List
 import sys
+import json
 
 
 class Parser:
@@ -242,13 +243,6 @@ class Parser:
             number_of_drones
         )
 
-        if (hub_dict[start_hub_name]["max_drones"] < number_of_drones):
-            print(
-                "max_drones in start hub "
-                "must be >= nb_drones", file=sys.stderr
-            )
-            exit(1)
-
         if (hub_dict[start_hub_name]["zone"] not in valid_zone_types):
             print(
                 "Zone type must be one of: "
@@ -385,3 +379,4 @@ class Parser:
             index += 1
 
         return hub_dict
+    

@@ -11,7 +11,7 @@
     "hubs": {
         "gate_hell1": {
             "name": "gate_hell1",
-            "x": 1,
+            "x": 2,
             "y": 0,
             "zone": "normal",
             "color": "red",
@@ -19,7 +19,7 @@
         },
         "gate_hell2": {
             "name": "gate_hell2",
-            "x": 2,
+            "x": 3,
             "y": 0,
             "zone": "normal",
             "color": "red",
@@ -27,7 +27,7 @@
         },
         "gate_hell3": {
             "name": "gate_hell3",
-            "x": 3,
+            "x": 4,
             "y": 0,
             "zone": "normal",
             "color": "red",
@@ -35,7 +35,7 @@
         },
         "gate_hell4": {
             "name": "gate_hell4",
-            "x": 4,
+            "x": 5,
             "y": 0,
             "zone": "normal",
             "color": "red",
@@ -43,7 +43,7 @@
         },
         "gate_hell5": {
             "name": "gate_hell5",
-            "x": 5,
+            "x": 6,
             "y": 0,
             "zone": "normal",
             "color": "red",
@@ -51,7 +51,7 @@
         },
         "maze_trap_a1": {
             "name": "maze_trap_a1",
-            "x": 1,
+            "x": 2,
             "y": 1,
             "zone": "normal",
             "color": "purple",
@@ -59,7 +59,7 @@
         },
         "maze_trap_a2": {
             "name": "maze_trap_a2",
-            "x": 2,
+            "x": 3,
             "y": 1,
             "zone": "normal",
             "color": "purple",
@@ -67,7 +67,7 @@
         },
         "maze_trap_a3": {
             "name": "maze_trap_a3",
-            "x": 3,
+            "x": 4,
             "y": 1,
             "zone": "normal",
             "color": "purple",
@@ -75,7 +75,7 @@
         },
         "maze_dead_a": {
             "name": "maze_dead_a",
-            "x": 4,
+            "x": 5,
             "y": 1,
             "zone": "normal",
             "color": "black",
@@ -83,7 +83,7 @@
         },
         "maze_trap_b1": {
             "name": "maze_trap_b1",
-            "x": 1,
+            "x": 2,
             "y": -1,
             "zone": "normal",
             "color": "purple",
@@ -91,7 +91,7 @@
         },
         "maze_trap_b2": {
             "name": "maze_trap_b2",
-            "x": 2,
+            "x": 3,
             "y": -1,
             "zone": "normal",
             "color": "purple",
@@ -99,7 +99,7 @@
         },
         "maze_trap_b3": {
             "name": "maze_trap_b3",
-            "x": 3,
+            "x": 4,
             "y": -1,
             "zone": "normal",
             "color": "purple",
@@ -107,7 +107,7 @@
         },
         "maze_dead_b": {
             "name": "maze_dead_b",
-            "x": 4,
+            "x": 5,
             "y": -1,
             "zone": "normal",
             "color": "black",
@@ -115,7 +115,7 @@
         },
         "maze_loop1": {
             "name": "maze_loop1",
-            "x": 1,
+            "x": 2,
             "y": 2,
             "zone": "restricted",
             "color": "brown",
@@ -123,7 +123,7 @@
         },
         "maze_loop2": {
             "name": "maze_loop2",
-            "x": 2,
+            "x": 3,
             "y": 2,
             "zone": "restricted",
             "color": "brown",
@@ -131,7 +131,7 @@
         },
         "maze_loop3": {
             "name": "maze_loop3",
-            "x": 3,
+            "x": 4,
             "y": 2,
             "zone": "restricted",
             "color": "brown",
@@ -139,7 +139,7 @@
         },
         "maze_loop4": {
             "name": "maze_loop4",
-            "x": 4,
+            "x": 5,
             "y": 2,
             "zone": "restricted",
             "color": "brown",
@@ -147,7 +147,7 @@
         },
         "maze_loop5": {
             "name": "maze_loop5",
-            "x": 5,
+            "x": 6,
             "y": 2,
             "zone": "restricted",
             "color": "brown",
@@ -155,7 +155,7 @@
         },
         "maze_loop6": {
             "name": "maze_loop6",
-            "x": 5,
+            "x": 6,
             "y": 1,
             "zone": "restricted",
             "color": "brown",
@@ -163,7 +163,7 @@
         },
         "micro_gate1": {
             "name": "micro_gate1",
-            "x": 6,
+            "x": 7,
             "y": 0,
             "zone": "normal",
             "color": "orange",
@@ -171,7 +171,7 @@
         },
         "micro_gate2": {
             "name": "micro_gate2",
-            "x": 7,
+            "x": 8,
             "y": 0,
             "zone": "normal",
             "color": "orange",
@@ -179,7 +179,7 @@
         },
         "micro_gate3": {
             "name": "micro_gate3",
-            "x": 8,
+            "x": 9,
             "y": 0,
             "zone": "normal",
             "color": "orange",
@@ -187,7 +187,7 @@
         },
         "overflow_hell1": {
             "name": "overflow_hell1",
-            "x": 6,
+            "x": 7,
             "y": 1,
             "zone": "restricted",
             "color": "maroon",
@@ -195,7 +195,7 @@
         },
         "overflow_hell2": {
             "name": "overflow_hell2",
-            "x": 7,
+            "x": 8,
             "y": 1,
             "zone": "restricted",
             "color": "maroon",
@@ -203,7 +203,7 @@
         },
         "overflow_hell3": {
             "name": "overflow_hell3",
-            "x": 8,
+            "x": 9,
             "y": 1,
             "zone": "restricted",
             "color": "maroon",
@@ -211,7 +211,7 @@
         },
         "overflow_hell4": {
             "name": "overflow_hell4",
-            "x": 6,
+            "x": 7,
             "y": -1,
             "zone": "restricted",
             "color": "maroon",
@@ -219,7 +219,7 @@
         },
         "overflow_hell5": {
             "name": "overflow_hell5",
-            "x": 7,
+            "x": 8,
             "y": -1,
             "zone": "restricted",
             "color": "maroon",
@@ -227,7 +227,7 @@
         },
         "overflow_hell6": {
             "name": "overflow_hell6",
-            "x": 8,
+            "x": 9,
             "y": -1,
             "zone": "restricted",
             "color": "maroon",
@@ -235,7 +235,7 @@
         },
         "false_hope1": {
             "name": "false_hope1",
-            "x": 9,
+            "x": 10,
             "y": 0,
             "zone": "priority",
             "color": "gold",
@@ -243,7 +243,7 @@
         },
         "false_hope2": {
             "name": "false_hope2",
-            "x": 10,
+            "x": 11,
             "y": 0,
             "zone": "priority",
             "color": "gold",
@@ -251,7 +251,7 @@
         },
         "false_hope3": {
             "name": "false_hope3",
-            "x": 11,
+            "x": 12,
             "y": 0,
             "zone": "priority",
             "color": "gold",
@@ -259,7 +259,7 @@
         },
         "priority_trap1": {
             "name": "priority_trap1",
-            "x": 9,
+            "x": 10,
             "y": 1,
             "zone": "priority",
             "color": "gold",
@@ -267,7 +267,7 @@
         },
         "priority_trap2": {
             "name": "priority_trap2",
-            "x": 10,
+            "x": 11,
             "y": 1,
             "zone": "priority",
             "color": "gold",
@@ -275,7 +275,7 @@
         },
         "priority_dead": {
             "name": "priority_dead",
-            "x": 11,
+            "x": 12,
             "y": 1,
             "zone": "normal",
             "color": "black",
@@ -283,7 +283,7 @@
         },
         "priority_trap3": {
             "name": "priority_trap3",
-            "x": 9,
+            "x": 10,
             "y": -1,
             "zone": "priority",
             "color": "gold",
@@ -291,7 +291,7 @@
         },
         "priority_trap4": {
             "name": "priority_trap4",
-            "x": 10,
+            "x": 11,
             "y": -1,
             "zone": "priority",
             "color": "gold",
@@ -299,7 +299,7 @@
         },
         "priority_dead2": {
             "name": "priority_dead2",
-            "x": 11,
+            "x": 12,
             "y": -1,
             "zone": "normal",
             "color": "black",
@@ -307,7 +307,7 @@
         },
         "conv_restricted1": {
             "name": "conv_restricted1",
-            "x": 12,
+            "x": 13,
             "y": 2,
             "zone": "restricted",
             "color": "darkred",
@@ -315,7 +315,7 @@
         },
         "conv_restricted2": {
             "name": "conv_restricted2",
-            "x": 13,
+            "x": 14,
             "y": 2,
             "zone": "restricted",
             "color": "darkred",
@@ -323,7 +323,7 @@
         },
         "conv_restricted3": {
             "name": "conv_restricted3",
-            "x": 14,
+            "x": 15,
             "y": 2,
             "zone": "restricted",
             "color": "darkred",
@@ -331,7 +331,7 @@
         },
         "conv_restricted4": {
             "name": "conv_restricted4",
-            "x": 12,
+            "x": 13,
             "y": 0,
             "zone": "restricted",
             "color": "darkred",
@@ -339,7 +339,7 @@
         },
         "conv_restricted5": {
             "name": "conv_restricted5",
-            "x": 13,
+            "x": 14,
             "y": 0,
             "zone": "restricted",
             "color": "darkred",
@@ -347,7 +347,7 @@
         },
         "conv_restricted6": {
             "name": "conv_restricted6",
-            "x": 14,
+            "x": 15,
             "y": 0,
             "zone": "restricted",
             "color": "darkred",
@@ -355,7 +355,7 @@
         },
         "conv_restricted7": {
             "name": "conv_restricted7",
-            "x": 12,
+            "x": 13,
             "y": -2,
             "zone": "restricted",
             "color": "darkred",
@@ -363,7 +363,7 @@
         },
         "conv_restricted8": {
             "name": "conv_restricted8",
-            "x": 13,
+            "x": 14,
             "y": -2,
             "zone": "restricted",
             "color": "darkred",
@@ -371,7 +371,7 @@
         },
         "conv_restricted9": {
             "name": "conv_restricted9",
-            "x": 14,
+            "x": 15,
             "y": -2,
             "zone": "restricted",
             "color": "darkred",
@@ -379,7 +379,7 @@
         },
         "final_merge": {
             "name": "final_merge",
-            "x": 15,
+            "x": 16,
             "y": 0,
             "zone": "normal",
             "color": "violet",
@@ -387,7 +387,7 @@
         },
         "final_torture1": {
             "name": "final_torture1",
-            "x": 16,
+            "x": 17,
             "y": 0,
             "zone": "normal",
             "color": "crimson",
@@ -395,7 +395,7 @@
         },
         "final_torture2": {
             "name": "final_torture2",
-            "x": 17,
+            "x": 18,
             "y": 0,
             "zone": "normal",
             "color": "crimson",
@@ -403,7 +403,7 @@
         },
         "final_torture3": {
             "name": "final_torture3",
-            "x": 18,
+            "x": 19,
             "y": 0,
             "zone": "normal",
             "color": "crimson",
@@ -411,7 +411,7 @@
         },
         "final_torture4": {
             "name": "final_torture4",
-            "x": 19,
+            "x": 20,
             "y": 0,
             "zone": "normal",
             "color": "crimson",
@@ -419,7 +419,7 @@
         },
         "final_torture5": {
             "name": "final_torture5",
-            "x": 20,
+            "x": 21,
             "y": 0,
             "zone": "normal",
             "color": "crimson",
@@ -428,7 +428,7 @@
     },
     "end_hub": {
         "name": "impossible_goal",
-        "x": 21,
+        "x": 23,
         "y": 0,
         "zone": "normal",
         "color": "rainbow",
