@@ -1,3 +1,4 @@
+from .Errors import *
 from typing import List
 import sys
 import json
@@ -6,135 +7,101 @@ import json
 class Parser:
     def __init__(self, path: str):
         self.path = path
-        self.data = self.initialize_data()
+        self.data_dict = {
+            "nb_drones": 0,
+            "start_hub": {},
+            "hubs": {},
+            "end_hub": {},
+            "connections": {}
+        }
 
-    def initialize_data(self) -> List[str]:
+    @staticmethod
+    def atopi(number):
         try:
-            with open(self.path, "r") as file:
-                data = file.read()
-                data = [line.strip() for line in data.split("\n") if line.strip()]
-
-        except (OSError, PermissionError):
-            print(
-                "Error: Unable to open the file. "
-                "Please check the file path or permissions.",
-                file=sys.stderr
-            )
-            exit(1)
-
-        cleaned_lines = []
-
-        for line in data:
-            if "#" in line:
-                new_line = line.split("#")
-                line = new_line[0]
-                if not new_line[0]:
-                    continue
-                if ":" not in new_line[0]:
-                    print(f"Invalid syntax in this line :{new_line[0]} # {new_line[1]}")
-                    exit(1)
-            cleaned_lines.append(line)
-
-        if len(cleaned_lines) < 4:
-            print(
-                "The map file must contain at least "
-                "'nb_drones', 'start_hub', "
-                "'end_hub', and one connection between them.",
-                file=sys.stderr
-            )
-            exit(1)
-
-        data_dict = {}
-        data_dict["nb_drones"] = self.parse_number_of_drones(cleaned_lines)
-
-        data_dict.update(
-            self.parse_hubs(cleaned_lines)
-        )
-
-        return data_dict
-
-    def parse_number_of_drones(self, data):
-        drones_line = data[0]
-
-        if "nb_drones:" not in drones_line:
-            print(
-                "Error in line 1: "
-                "The map file must start with 'nb_drones'.",
-                file=sys.stderr
-            )
-            exit(1)
-
-        try:
-            drones = int(drones_line.split(":")[1])
-
-            if drones <= 0:
-                raise ValueError
-
+            number = int(number)
+            if number <= 0:
+                raise PositiveInt()
         except ValueError:
-            print(
-                "Error in line 1: nb_drones must be a positive integer",
-                file=sys.stderr
-            )
-            exit(1)
+            raise MapSyntaxError()
+        return number
 
-        return drones
-
-    def get_metadata(self, data, max_drones_value=0):
+    @staticmethod
+    def parse_hubs_metadata(data, count_line):
         data = data.split()
 
+        if len(data) < 3:
+            raise MapSyntaxError(f"Error in line {count_line}: Invalid zone declaration. Expected: <name> <x> <y>.")
+
         name = data[0]
-        x = int(data[1])
-        y = int(data[2])
+
+        if "-" in name:
+            raise MapSyntaxError(f"Error in line {count_line}: Zone names cannot contain '-'.")
+
+        try:
+            x = int(data[1])
+            y = int(data[2])
+        except ValueError:
+            raise PositiveInt(f"Error in line {count_line}: Zone coordinates must be integers.")
 
         zone = "normal"
         color = None
-
-        if max_drones_value:
-            max_drones = max_drones_value
-        else:
-            max_drones = 1
+        max_drones = 1
 
         metadata = data[3:]
 
-        if len(metadata) > 0:
+        if metadata:
 
             if (
-                metadata[0].startswith("[")
-                and metadata[-1].endswith("]")
+                not metadata[0].startswith("[")
+                or not metadata[-1].endswith("]")
             ):
-                metadata[0] = metadata[0][1:]
-                metadata[-1] = metadata[-1][:-1]
+                raise MapSyntaxError(f"Error in line {count_line}: Metadata brackets are missing or malformed.")
 
-                for index, item in enumerate(metadata):
-                    metadata[index] = item.split("=")
+            metadata[0] = metadata[0][1:]
+            metadata[-1] = metadata[-1][:-1]
 
-                    key = metadata[index][0]
-                    value = metadata[index][1]
+            used_keys = set()
 
-                    if key == "color":
-                        color = value
+            for item in metadata:
 
-                    elif key == "zone":
-                        zone = value
+                data_val = item.split("=")
 
-                    elif key == "max_drones":
-                        max_drones = int(value)
+                if len(data_val) != 2:
+                    raise MapSyntaxError(f"Error in line {count_line}: Invalid metadata syntax.")
 
-                        if max_drones <= 0:
-                            raise ValueError(
-                                "The value of 'max_drones' "
-                                "must be a positive integer."
-                            )
+                key, value = data_val
 
-                    else:
-                        raise SyntaxError(
-                            "Invalid metadata syntax."
+                if key in used_keys:
+                    raise MapSyntaxError(f"Error in line {count_line}: Duplicate metadata key '{key}'.")
+
+                used_keys.add(key)
+
+                if key == "color":
+                    color = value
+
+                elif key == "zone":
+
+                    valid_types = {
+                        "normal",
+                        "blocked",
+                        "restricted",
+                        "priority"
+                    }
+
+                    if value not in valid_types:
+                        raise ZoneTypesError(
+                            f"Error in line {count_line}: Invalid zone type '{value}'"
                         )
 
-            else:
-                raise SyntaxError(
-                    "Metadata brackets are missing or malformed."
-                )
+                    zone = value
+
+                elif key == "max_drones":
+                        try:
+                            max_drones = Parser.atopi(value)
+                        except (ValueError, PositiveInt):
+                            raise MapSyntaxError(f"Error in line {count_line}: max_drones must be a positive integer.")
+                else:
+                    raise MapSyntaxError(f"Error in line {count_line}: Unknown metadata key '{key}'")
 
         return {
             "name": name,
@@ -145,238 +112,242 @@ class Parser:
             "max_drones": max_drones
         }
 
-    def parse_connection_data(self, data, defined_zones):
+    def define_hubs(self,data, count_line):
+        after_nb_drones = count_line
+        start_flag = 0
+        end_flag = 0
+        hubs_names = set()
+        coordinates = set()
+
+        for line in data[after_nb_drones:]:
+            count_line += 1
+            clean_line = line.strip()
+            if not clean_line:
+                continue
+
+            if "#" in clean_line:
+                if clean_line.startswith("#"):
+                    continue
+                clean_line = clean_line.split("#")[0]
+
+            split_line = clean_line.split(":")
+            if len(split_line) != 2:
+                raise MapSyntaxError(f"Error in line {count_line}: Syntax Error")
+
+            if split_line[0] == "start_hub":
+                if start_flag:
+                    raise DuplicatHub(f"Error in line {count_line}: Multiple start zones are not allowed.")
+                start_flag += 1
+                self.data_dict["start_hub"] = self.parse_hubs_metadata(split_line[1], count_line)
+
+                start_name = self.data_dict["start_hub"]["name"]
+                x = self.data_dict["start_hub"]["x"]
+                y = self.data_dict["start_hub"]["y"]
+
+                start_coord = (x, y)
+                if start_coord in coordinates:
+                    raise DuplicatCoord(f"Error in line {count_line}: Coordinates ({x}, {y}) are already used by another zone.")
+                if start_name in hubs_names:
+                    raise DuplicatHub(f"Error in line {count_line}: Zone '{start_name}' is already defined.")  
+
+                hubs_names.add(start_name)
+                coordinates.add(start_coord)
+
+            elif split_line[0] == "end_hub":
+                if end_flag:
+                    raise DuplicatHub(f"Error in line {count_line}: Multiple end zones are not allowed.")
+                end_flag += 1
+                self.data_dict["end_hub"] = self.parse_hubs_metadata(split_line[1], count_line)
+
+                end_name = self.data_dict["end_hub"]["name"]
+                x = self.data_dict["end_hub"]["x"]
+                y = self.data_dict["end_hub"]["y"]
+
+                end_coord = (x, y)
+                if end_coord in coordinates:
+                    raise DuplicatCoord(f"Error in line {count_line}: Coordinates ({x}, {y}) are already used by another zone.")
+                if end_name in hubs_names:
+                    raise DuplicatHub(f"Error in line {count_line}: Zone '{end_name}' is already defined.")  
+
+                hubs_names.add(end_name)
+                coordinates.add(end_coord)
+    
+            elif split_line[0] == "hub":
+                hub_dict = self.parse_hubs_metadata(split_line[1], count_line)
+
+                name_hub = hub_dict["name"]
+                x = hub_dict["x"]
+                y = hub_dict["y"]
+
+                hub_coord = (x, y)
+                if hub_coord in coordinates:
+                    raise DuplicatCoord(f"Error in line {count_line}: Coordinates ({x}, {y}) are already used by another zone.")
+                if name_hub in hubs_names:
+                    raise DuplicatHub(f"Error in line {count_line}: Zone '{name_hub}' is already defined.")
+                
+                self.data_dict["hubs"][name_hub] = hub_dict
+                hubs_names.add(name_hub)
+                coordinates.add(hub_coord)
+
+            elif split_line[0] == "connection":
+                if not start_flag:
+                    raise MapSyntaxError(f"Error in line {count_line}: Connections cannot be declared before the start zone is defined.")
+                if not end_flag:
+                    raise MapSyntaxError(f"Error in line {count_line}: Connections cannot be declared before the end zone is defined.")
+                count_line -= 1
+                break
+
+            else:
+                raise MapSyntaxError(f"Error in line {count_line}: Unknown declaration type.")
+        return count_line
+
+    @staticmethod
+    def parse_connection_metadata(data, count_line):
         data = data.split()
 
-        connection = data[0].split("-", 1)
+        if 1 > len(data) > 2:
+            raise MapSyntaxError(f"Error in line {count_line}: Invalid connection declaration.")
+
+        connection = data[0]
+
+        if "-" not in connection:
+            raise MapSyntaxError(f"Error in line {count_line}: Invalid connection syntax.")
+
+        zones = connection.split("-")
+
+        if len(zones) != 2:
+            raise MapSyntaxError(f"Error in line {count_line}: Invalid connection syntax.")
 
         max_link_capacity = 1
 
-        if len(connection) != 2:
-            raise ValueError(
-                "A connection must contain exactly two zones."
-            )
+        metadata = data[1:]
 
-        if (
-            connection[0] not in defined_zones
-            or connection[1] not in defined_zones
-        ):
-            raise ValueError(
-                "Connection contains an undefined zone."
-            )
+        metadata_len = len(metadata)
+        if metadata_len > 1:
+            raise MapSyntaxError(f"Error in line {count_line}: Only 'max_link_capacity' metadata is allowed for connections.")
 
-        data_length = len(data)
+        if metadata_len:
+            data_val = metadata[0].split("=")
+            if len(data_val) != 2:
+                raise MapSyntaxError(f"Error in line {count_line}: Invalid connection metadata format. Expected: [max_link_capacity=<value>].")
 
-        if data_length == 1:
-            return {
-                "connection": connection,
-                "max_link_capacity": max_link_capacity
-            }
+            if (not data_val[0].startswith("[") or not data_val[1].endswith("]")):
+                    raise MapSyntaxError(f"Error in line {count_line}: Metadata brackets are missing or malformed.")
 
-        metadata = data[1].split("=")
+            data_val[0] = data_val[0][1:]
+            data_val[1] = data_val[1][:-1]
 
-        if (
-            not metadata[0].startswith("[")
-            or not metadata[1].endswith("]")
-        ):
-            raise SyntaxError(
-                "Invalid connection metadata brackets."
-            )
+            if len(data_val) != 2:
+                raise MapSyntaxError(f"Error in line {count_line}: Invalid metadata syntax.")
 
-        metadata[0] = metadata[0][1:]
-        metadata[1] = metadata[1][:-1]
+            key, value = data_val
 
-        if (
-            metadata[0] != "max_link_capacity"
-            or len(metadata) != 2
-        ):
-            raise SyntaxError(
-                "Only 'max_link_capacity' is allowed "
-                "in connection metadata."
-            )
+            if key == "max_link_capacity":
+                try:
+                    max_link_capacity = Parser.atopi(value)
+                except (MapSyntaxError, PositiveInt):
+                    raise MapSyntaxError(f"Error in line {count_line}: max_link_capacity must be a positive integer.")
 
-        try:
-            max_link_capacity = int(metadata[1])
-
-            if max_link_capacity <= 0:
-                raise ValueError
-
-        except ValueError:
-            raise ValueError(
-                "max_link_capacity must be a positive integer"
-            )
+            else:
+                raise MapSyntaxError(f"Error in line {count_line}: Unknown metadata key '{key}'.")
 
         return {
-            "connection": connection,
+            "connection": zones,
             "max_link_capacity": max_link_capacity
         }
 
-    def parse_hubs(self, data):
-        valid_zone_types = [
-            "blocked",
-            "normal",
-            "restricted",
-            "priority"
-        ]
 
-        coordinates_list = []
+    def define_connections(self, data, count_line):
+        valid_hubs = set()
+        connections = set()
+        counter = 0
 
-        hub_dict = {}
+        for hub_name in self.data_dict["hubs"]:
+            valid_hubs.add(hub_name)
 
-        index = 1
+        valid_hubs.add(self.data_dict["start_hub"]["name"])
+        valid_hubs.add(self.data_dict["end_hub"]["name"])
 
-        start_hub = data[index].split(":", 1)
-        start_hub_name = start_hub[0]
-        if start_hub_name != "start_hub":
+        after_hubs = count_line
+        for line in data[after_hubs:]:
+            count_line += 1
+            clean_line = line.strip()
+            if not clean_line:
+                continue
+
+            if "#" in clean_line:
+                if clean_line.startswith("#"):
+                    continue
+                clean_line = clean_line.split("#")[0]
+
+            split_line = clean_line.split(":")
+
+            if len(split_line) != 2:
+                raise MapSyntaxError(f"Error in line {count_line}: Syntax Error")
+
+            if split_line[0] != "connection":
+                raise MapSyntaxError(f"Error in line {count_line}: Syntax Error")
+
+
+            metadata = self.parse_connection_metadata(split_line[1], count_line)
+            if metadata["connection"][0] not in valid_hubs or metadata["connection"][1] not in valid_hubs:
+                print(metadata["connection"][1])
+                print(metadata["connection"][0])
+                raise UndefineHub(f"Error in line {count_line}: Connection references an undefined zone.")
+
+            z1, z2 = sorted(metadata["connection"])
+            connection = (z1, z2)
+            if connection in connections:
+                raise DuplicatConnection(f"Error in line {count_line}: Connection between '{z1}' and '{z2}' is already defined.")
+
+            connections.add(connection)
+            conn_id = "connection" + str(counter)
+            self.data_dict["connections"][conn_id] = metadata
+            counter += 1
+
+    def initialize_data(self) -> List[str]:
+        try:
+            with open(self.path, "r") as file:
+                data = file.read().splitlines()
+
+        except (OSError, PermissionError):
             print(
-                "Error: After 'nb_drones', the map must start with a 'start_hub' definition.",
+                "Error: Unable to open the file. "
+                "Please check the file path or permissions.",
                 file=sys.stderr
             )
             exit(1)
 
-        number_of_drones = int(
-            data[0].split(":", 1)[1]
-        )
+        count_line = 0
+        for line in data:
+            count_line += 1
+            clean_line = line.strip()
+            if not clean_line:
+                continue
 
-        hub_dict[start_hub_name] = self.get_metadata(
-            start_hub[1],
-            number_of_drones
-        )
-
-        if (hub_dict[start_hub_name]["zone"] not in valid_zone_types):
-            print(
-                "Zone type must be one of: "
-                "['blocked', 'normal', 'restricted', 'priority']", file=sys.stderr
-            )
-            exit(1)
-
-        index += 1
-        data_length = len(data)
-        hub_dict["hubs"] = {}
-
-        coordinates = (
-            hub_dict[start_hub_name]["x"],
-            hub_dict[start_hub_name]["y"]
-        )
-        coordinates_list.append(coordinates)
-
-        defined_zones = [
-            hub_dict[start_hub_name]["name"]
-        ]
-        e_n_d = 0
-        while index < data_length:
-            hub = data[index].split(":", 1)
-
-            if hub[0] != "hub":
-
-                if hub[0] == "end_hub":
-                    e_n_d = 1
-                    hub_dict[hub[0]] = self.get_metadata(hub[1])
-                    zone_name = hub_dict[hub[0]]["zone"]
-
-                    if (zone_name not in valid_zone_types):
-                        print(
-                            "Zone type must be one of: "
-                            "['blocked', 'normal', 'restricted', 'priority']",
-                            file=sys.stderr
-                        )
-                        exit(1)
-
-                    coordinates = (
-                        hub_dict[hub[0]]["x"],
-                        hub_dict[hub[0]]["y"]
-                    )
-
-                    if coordinates in coordinates_list:
-                        print("Duplicate coordinates", file=sys.stderr)
-                        exit(1)
-
-                    coordinates_list.append(coordinates)
-                    defined_zones.append(
-                        hub_dict[hub[0]]["name"]
-                    )
-
-                    index += 1
+            if "#" in clean_line:
+                if clean_line.startswith("#"):
                     continue
-                else:
-                    break
+                clean_line = clean_line.split("#")[0]
 
-            hub_data = self.get_metadata(hub[1])
-
-            if (hub_data["zone"] not in valid_zone_types):
-                print(
-                    "Zone type must be one of: "
-                    "['blocked', 'normal', 'restricted', 'priority']",
-                    file=sys.stderr
-                )
-                exit(1)
-
-            coordinates = (
-                hub_data["x"],
-                hub_data["y"]
-            )
-
-            if coordinates in coordinates_list:
-                print("Duplicate coordinates", file=sys.stderr)
-                exit(1)
-
-            coordinates_list.append(coordinates)
-            name = hub_data["name"]
-            defined_zones.append(name)
-
-            hub_dict["hubs"][name] = hub_data
-
-            index += 1
-        if not e_n_d:
-            print("Error: end_hub are missde")
-            exit(1)
-        hub_dict["connections"] = {}
-
-        connection_id = 0
-
-        while index < data_length:
-            connection = data[index].split(":", 1)
-
-            if connection[0] != "connection":
-                print(
-                    "Invalid connection definition syntax.",
-                    file=sys.stderr
-                )
-                exit(1)
-
-            if len(connection) != 2:
-                print(
-                    "A connection definition must contain "
-                    "exactly one ':'.",
-                    file=sys.stderr
-                )
-                exit(1)
-
+            nb_drones_line = clean_line.split(":")
             try:
-                hub_dict["connections"][
-                    "connection" + str(connection_id)
-                ] = self.parse_connection_data(
-                    connection[1],
-                    defined_zones
-                )
-
-            except (ValueError, SyntaxError) as error:
-                print(
-                    f"Error in line {index + 1}: {error}",
-                    file=sys.stderr
-                )
+                if nb_drones_line[0] != "nb_drones":
+                    raise MapSyntaxError()
+                self.data_dict["nb_drones"] = self.atopi(nb_drones_line[1])
+                break
+            except (MapSyntaxError, PositiveInt):
+                print(f"Error in line {count_line}: Invalid drone count declaration.",file=sys.stderr)
+                print("Expected format: nb_drones:<positive_integer>",file=sys.stderr)
                 exit(1)
+        
+        count_line = self.define_hubs(data, count_line)
+        self.define_connections(data, count_line)
 
-            except BaseException:
-                print(
-                    f"Error in line {index + 1}: "
-                    "Invalid syntax format.",
-                    file=sys.stderr
-                )
-                exit(1)
+        
 
-            connection_id += 1
-            index += 1
 
-        return hub_dict
-    
+
+
+
+                

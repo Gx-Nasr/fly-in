@@ -3,13 +3,16 @@ from .graph_init import GraphInit
 from .dijkstra import PathFinding
 import sys
 import json
+from .Errors import *
 
 parser = Parser(sys.argv[1])
+try:
+    parser.initialize_data()
+except MapSyntaxError as e:
+    print(e)
 
-with open("test.json", "w") as file:
-    json.dump(parser.data, file, indent=4)
 
-graph = GraphInit(parser.data)
+graph = GraphInit(parser.data_dict)
 
 djikstra = PathFinding(graph.graph)
 
