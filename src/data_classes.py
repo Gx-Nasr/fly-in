@@ -13,8 +13,6 @@ class Zone:
     current_drones: int = 0
 
 
-
-
 @dataclass
 class Connection:
     from_zone: Zone
@@ -28,6 +26,7 @@ class Drone:
     current_zone: Zone
     path: List[tuple] = field(default_factory=list)
 
+
 @dataclass
 class GraphData:
     nb_drones: int
@@ -38,12 +37,10 @@ class GraphData:
     end: Zone
     turns: int = 0
 
-
     def move_cost(self, zone):
         if zone.zone_type == "restricted":
             return 2
         return 1
-
 
     def get_neighbor(self, connection, zone):
         if connection.from_zone == zone:
