@@ -24,3 +24,7 @@ class ZoneTypesError(Exception):
 
 class UndefineHub(Exception):
     pass
+
+
+class NoPathFinde(Exception):
+    pass

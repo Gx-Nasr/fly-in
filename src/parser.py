@@ -1,6 +1,5 @@
 import sys
 from typing import Any, Dict, List, Set, Tuple
-
 from .Errors import MapSyntaxError, PositiveInt, \
                     DuplicatHub, DuplicatCoord, \
                     ZoneTypesError, UndefineHub, DuplicatConnection
@@ -149,7 +148,7 @@ class Parser:
                 elif key == "max_drones":
                     try:
                         max_drones = Parser.atopi(value)
-                    except (ValueError, PositiveInt):
+                    except (MapSyntaxError, PositiveInt):
                         raise MapSyntaxError(
                             f"Error in line {count_line}:"
                             " max_drones must be a positive integer."
@@ -157,7 +156,7 @@ class Parser:
                 else:
                     raise MapSyntaxError(
                         f"Error in line {count_line}:"
-                        " Unknown metadata key '{key}'"
+                        f" Unknown metadata key '{key}'"
                     )
 
         return {
@@ -302,6 +301,14 @@ class Parser:
                 raise MapSyntaxError(
                     f"Error in line {count_line}: Unknown declaration type."
                 )
+        if not start_flag:
+            raise MapSyntaxError(
+                f"Error in line {count_line}: Start_hub is not defined."
+            )
+        if not end_flag:
+            raise MapSyntaxError(
+                f"Error in line {count_line}: End_hub is not defined."
+            )
         return count_line
 
     @staticmethod
@@ -337,7 +344,9 @@ class Parser:
             raise MapSyntaxError(
                 f"Error in line {count_line}: Invalid connection syntax."
             )
-
+        if zones[0] == zones[1]:
+            raise MapSyntaxError(f"Error in line {count_line}:"
+                                 " self connection is porhibited")
         max_link_capacity = 1
 
         metadata: List[str] = data[1:]
@@ -481,6 +490,7 @@ class Parser:
             exit(1)
 
         count_line = 0
+        nb_drones_flag = 0
         for line in data:
             count_line += 1
             clean_line = line.strip()
@@ -497,6 +507,7 @@ class Parser:
                 if nb_drones_line[0] != "nb_drones":
                     raise MapSyntaxError()
                 self.data_dict["nb_drones"] = self.atopi(nb_drones_line[1])
+                nb_drones_flag += 1
                 break
             except (MapSyntaxError, PositiveInt):
                 print(
@@ -509,7 +520,8 @@ class Parser:
                     file=sys.stderr,
                 )
                 exit(1)
-
+        if not nb_drones_flag:
+            raise MapSyntaxError(f"Error in line {count_line}: nb_drones are not defined.")
         count_line = self.define_hubs(data, count_line)
         self.define_connections(data, count_line)
 

@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import heapq
 from typing import Dict, List, Optional, Set, Tuple
-
+from .Errors import NoPathFinde
 from .data_classes import Connection, Drone, GraphData, Zone
 
 
@@ -163,7 +161,7 @@ class PathFinding:
                                 (z1, z2, t), 0
                             ) + 1
 
-    def print_output(self, drones: List[Drone]) -> None:
+    def print_output(self, drones: List[Drone]) -> int:
         """Print drone movements for each turn.
 
         Args:
@@ -199,6 +197,7 @@ class PathFinding:
                             )
                             check_list[drone.id_drone] = drone.path[t][0]
             print()
+        return max_turn
 
     def get_drones_path(self) -> None:
         """Compute and reserve paths for all drones, then print the result.
@@ -209,11 +208,11 @@ class PathFinding:
         for drone in self.graph.all_drones:
             path = self.dijkstra()
             if not path:
-                raise ValueError(
+                NoPathFinde(
                     "We can't find the path check your map are valid"
                 )
 
             drone.path = path
             self.reserve(path)
 
-        self.print_output(self.graph.all_drones)
+        self.graph.turns = self.print_output(self.graph.all_drones)
