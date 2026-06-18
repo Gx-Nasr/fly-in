@@ -40,7 +40,6 @@ class PathFinding:
         parent[start_state] = None
         heapq.heappush(pq, (turn, 0, counter, start_state))
         visitions: Set[Tuple[Zone, int]] = set()
-
         while pq:
             _, _1, _2, state = heapq.heappop(pq)
             current_zone, current_turn = state
@@ -51,41 +50,57 @@ class PathFinding:
 
             if current_zone == self.graph.end:
                 path: List[Tuple[Zone, int]] = []
+
+                backtrack_state: Optional[Tuple[Zone, int]] = state
                 old_turn: int = state[1]
                 old_state: Tuple[Zone, int] = state
-                while state is not None:
-                    if old_turn == state[1] + 2:
+
+                while backtrack_state is not None:
+                    current_state: Tuple[Zone, int] = backtrack_state
+
+                    if old_turn == current_state[1] + 2:
                         path.append(old_state)
-                    path.append(state)
-                    old_turn = state[1]
-                    old_state = state
-                    state = parent[state]
+
+                    path.append(current_state)
+
+                    old_turn = current_state[1]
+                    old_state = current_state
+                    backtrack_state = parent[current_state]
+
                 path.reverse()
                 return path
 
             wait_turn: int = current_turn + 1
+
             if (
                 current_zone == self.start
                 or self.zone_reservations.get(
                     (current_zone.name, wait_turn), 0
-                    ) < current_zone.max_drones
+                ) < current_zone.max_drones
             ):
-                wait_state: Tuple[Zone, int] = (current_zone, wait_turn)
+                wait_state: Tuple[Zone, int] = (
+                    current_zone,
+                    wait_turn
+                )
 
                 if distances.get(wait_state, -1) == -1:
                     distances[wait_state] = wait_turn
                     parent[wait_state] = state
                     counter += 1
-                    heapq.heappush(pq, (wait_turn, 1, counter, wait_state))
+                    heapq.heappush(
+                        pq,
+                        (wait_turn, 1, counter, wait_state)
+                    )
 
-            connections: List[Connection] = self.graph.get_connections(
-                current_zone
-                )
+            connections: List[Connection] = (
+                self.graph.get_connections(current_zone)
+            )
 
             for connection in connections:
                 neighbor: Zone = self.graph.get_neighbor(
-                    connection, current_zone
-                    )
+                    connection,
+                    current_zone
+                )
 
                 if neighbor.zone_type == "blocked":
                     continue
@@ -94,37 +109,73 @@ class PathFinding:
                 turns: int = current_turn + cost
 
                 if neighbor != self.end:
-                    current_reserved: int = self.zone_reservations.get(
-                        (neighbor.name, turns), 0
+                    current_reserved: int = (
+                        self.zone_reservations.get(
+                            (neighbor.name, turns),
+                            0
+                        )
                     )
+
                     if current_reserved >= neighbor.max_drones:
                         continue
 
                 is_capacity_full: bool = False
+
                 z1: str
                 z2: str
-                z1, z2 = tuple(sorted([current_zone.name, neighbor.name]))
-                for t in range(current_turn, turns):
-                    conn_reserverd: int = self.capacity_reservations.get(
-                        (z1, z2, t), 0
+                z1, z2 = tuple(
+                    sorted(
+                        [
+                            current_zone.name,
+                            neighbor.name
+                        ]
                     )
-                    if conn_reserverd >= connection.max_link_capacity:
+                )
+
+                for t in range(current_turn, turns):
+                    conn_reserverd: int = (
+                        self.capacity_reservations.get(
+                            (z1, z2, t),
+                            0
+                        )
+                    )
+
+                    if (
+                        conn_reserverd
+                        >= connection.max_link_capacity
+                    ):
                         is_capacity_full = True
                         break
 
                 if is_capacity_full:
                     continue
 
-                next_state: Tuple[Zone, int] = (neighbor, turns)
+                next_state: Tuple[Zone, int] = (
+                    neighbor,
+                    turns
+                )
 
                 if distances.get(next_state, -1) == -1:
                     distances[next_state] = turns
                     parent[next_state] = state
+
                     zone_cost: int = 0
+
                     if neighbor.zone_type == "priority":
                         zone_cost = -1
+
                     counter += 1
-                    heapq.heappush(pq, (turns, zone_cost, counter, next_state))
+
+                    heapq.heappush(
+                        pq,
+                        (
+                            turns,
+                            zone_cost,
+                            counter,
+                            next_state
+                        )
+                    )
+
         return None
 
     def reserve(self, path: List[Tuple[Zone, int]]) -> None:
@@ -135,7 +186,8 @@ class PathFinding:
         """
         current_zone: Zone | int = 0
         current_turn: int = 0
-        for i in range(len(path)):
+        path_len = len(path)
+        for i in range(path_len):
             if (current_zone, current_turn) != path[i]:
                 current_zone, current_turn = path[i]
 
@@ -146,7 +198,7 @@ class PathFinding:
                         (current_zone.name, current_turn), 0
                     ) + 1
 
-                if i < len(path) - 1:
+                if i < path_len - 1:
                     next_zone, next_turn = path[i + 1]
 
                     if current_zone.name != next_zone.name:
@@ -200,19 +252,21 @@ class PathFinding:
         return max_turn
 
     def get_drones_path(self) -> None:
-        """Compute and reserve paths for all drones, then print the result.
+        """Compute and reserve paths for all drones."""
 
-        Raises:
-            ValueError: If a path cannot be found for a drone.
-        """
         for drone in self.graph.all_drones:
             path = self.dijkstra()
-            if not path:
-                NoPathFinde(
+
+            if path is None:
+                raise NoPathFinde(
                     "We can't find the path check your map are valid"
                 )
 
             drone.path = path
             self.reserve(path)
+
+        self.graph.turns = self.print_output(
+            self.graph.all_drones
+        )
 
         self.graph.turns = self.print_output(self.graph.all_drones)

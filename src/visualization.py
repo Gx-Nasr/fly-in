@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from matplotlib.backend_bases import KeyEvent
 from .data_classes import GraphData
 
 
@@ -168,7 +169,7 @@ class DroneVisualizer:
 
         self.fig.canvas.draw()
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: KeyEvent) -> None:
         if event.key == 'right':
             if self.current_turn < self.max_turns - 1:
                 self.current_turn += 1

@@ -1,7 +1,7 @@
 import sys
 from typing import Any, Dict, List, Set, Tuple
 from .Errors import MapSyntaxError, PositiveInt, \
-                    DuplicatHub, DuplicatCoord, \
+                    DuplicatHub, DuplicatCoord, MapLogic, \
                     ZoneTypesError, UndefineHub, DuplicatConnection
 
 
@@ -20,7 +20,7 @@ class Parser:
             path: The path to the map file.
         """
         self.path: str = path
-        self.data_dict: Dict[str, int | Dict[str, str | int | Any]] = {
+        self.data_dict: Dict[str, Any] = {
             "nb_drones": 0,
             "start_hub": {},
             "hubs": {},
@@ -43,15 +43,17 @@ class Parser:
             MapSyntaxError: If the value is not an integer.
         """
         try:
-            number = int(number)
-            if number <= 0:
+            positive_number: int = int(number)
+            if positive_number <= 0:
                 raise PositiveInt()
         except ValueError:
             raise MapSyntaxError()
-        return number
+        return positive_number
 
     @staticmethod
-    def parse_hubs_metadata(data: str, count_line: int) -> Dict[str, Any]:
+    def parse_hubs_metadata(
+        data_str: str, count_line: int
+            ) -> Dict[str, Any]:
         """Parse hub metadata from a zone declaration line.
 
         Args:
@@ -61,7 +63,7 @@ class Parser:
         Returns:
             A dictionary containing parsed hub metadata.
         """
-        data: List[str] = data.split()
+        data: List[str] = data_str.split()
 
         if len(data) < 3:
             raise MapSyntaxError(
@@ -89,7 +91,6 @@ class Parser:
         zone = "normal"
         color = None
         max_drones = 1
-
         metadata: List[str] = data[3:]
 
         if metadata:
@@ -172,21 +173,29 @@ class Parser:
         """Parse hub declarations and update parser state.
 
         Args:
-            data: The raw lines of the map file.
-            count_line: The current line number after parsing nb_drones.
+            data: Raw lines from the map file.
+            count_line: Current line number after parsing nb_drones.
 
         Returns:
-            The line number where connection parsing should begin.
+            Line number where connection parsing should start.
+
+        Raises:
+            MapSyntaxError: If the map syntax is invalid.
+            DuplicatHub: If a hub is declared more than once.
+            DuplicatCoord: If two hubs share the same coordinates.
+            MapLogic: If the map violates logical constraints.
         """
         after_nb_drones = count_line
         start_flag = 0
         end_flag = 0
+
         hubs_names: Set[str] = set()
         coordinates: Set[Tuple[int, int]] = set()
 
         for line in data[after_nb_drones:]:
             count_line += 1
             clean_line = line.strip()
+
             if not clean_line:
                 continue
 
@@ -196,35 +205,55 @@ class Parser:
                 clean_line = clean_line.split("#")[0]
 
             split_line = clean_line.split(":")
+
             if len(split_line) != 2:
-                raise MapSyntaxError(f"Error in line {count_line}:"
-                                     " Syntax Error")
+                raise MapSyntaxError(
+                    f"Error in line {count_line}: Syntax Error"
+                )
 
             if split_line[0] == "start_hub":
                 if start_flag:
                     raise DuplicatHub(
-                        f"Error in line {count_line}:"
-                        " Multiple start zones are not allowed."
+                        f"Error in line {count_line}: "
+                        "Multiple start zones are not allowed."
                     )
+
                 start_flag += 1
+
                 self.data_dict["start_hub"] = self.parse_hubs_metadata(
-                    split_line[1], count_line
+                    split_line[1],
+                    count_line,
                 )
+
+                if self.data_dict["start_hub"]["zone"] == "blocked":
+                    raise MapLogic(
+                        f"Error in line {count_line}: "
+                        "The start_hub cannot be blocked."
+                    )
+
+                max_drones = self.data_dict["start_hub"]["max_drones"]
+                nb_drones = self.data_dict["nb_drones"]
+
+                if max_drones < nb_drones:
+                    self.data_dict["start_hub"]["max_drones"] = nb_drones
 
                 start_name = self.data_dict["start_hub"]["name"]
                 x = self.data_dict["start_hub"]["x"]
                 y = self.data_dict["start_hub"]["y"]
 
                 start_coord = (x, y)
+
                 if start_coord in coordinates:
                     raise DuplicatCoord(
-                        f"Error in line {count_line}: Coordinates ({x}, {y}) "
-                        "are already used by another zone."
+                        f"Error in line {count_line}: "
+                        f"Coordinates ({x}, {y}) are already used "
+                        "by another zone."
                     )
+
                 if start_name in hubs_names:
                     raise DuplicatHub(
-                        f"Error in line {count_line}: Zone '{start_name}'"
-                        " is already defined."
+                        f"Error in line {count_line}: "
+                        f"Zone '{start_name}' is already defined."
                     )
 
                 hubs_names.add(start_name)
@@ -236,84 +265,117 @@ class Parser:
                         f"Error in line {count_line}: "
                         "Multiple end zones are not allowed."
                     )
+
                 end_flag += 1
+
                 self.data_dict["end_hub"] = self.parse_hubs_metadata(
-                    split_line[1], count_line
+                    split_line[1],
+                    count_line,
                 )
+
+                if self.data_dict["end_hub"]["zone"] == "blocked":
+                    raise MapLogic(
+                        f"Error in line {count_line}: "
+                        "The end_hub cannot be blocked."
+                    )
+
+                nb_drones = self.data_dict["nb_drones"]
+                max_drones = self.data_dict["end_hub"]["max_drones"]
+
+                if max_drones < nb_drones:
+                    self.data_dict["end_hub"]["max_drones"] = nb_drones
 
                 end_name = self.data_dict["end_hub"]["name"]
                 x = self.data_dict["end_hub"]["x"]
                 y = self.data_dict["end_hub"]["y"]
 
                 end_coord = (x, y)
+
                 if end_coord in coordinates:
                     raise DuplicatCoord(
-                        f"Error in line {count_line}: Coordinates ({x}, {y}) "
-                        "are already used by another zone."
+                        f"Error in line {count_line}: "
+                        f"Coordinates ({x}, {y}) are already used "
+                        "by another zone."
                     )
+
                 if end_name in hubs_names:
                     raise DuplicatHub(
-                        f"Error in line {count_line}:"
-                        f" Zone '{end_name}' is already defined."
+                        f"Error in line {count_line}: "
+                        f"Zone '{end_name}' is already defined."
                     )
 
                 hubs_names.add(end_name)
                 coordinates.add(end_coord)
 
             elif split_line[0] == "hub":
-                hub_dict = self.parse_hubs_metadata(split_line[1], count_line)
+                hub_dict = self.parse_hubs_metadata(
+                    split_line[1],
+                    count_line,
+                )
 
                 name_hub = hub_dict["name"]
                 x = hub_dict["x"]
                 y = hub_dict["y"]
 
                 hub_coord = (x, y)
+
                 if hub_coord in coordinates:
                     raise DuplicatCoord(
-                        f"Error in line {count_line}: Coordinates ({x}, {y}) "
-                        "are already used by another zone."
+                        f"Error in line {count_line}: "
+                        f"Coordinates ({x}, {y}) are already used "
+                        "by another zone."
                     )
+
                 if name_hub in hubs_names:
                     raise DuplicatHub(
-                        f"Error in line {count_line}:"
-                        f" Zone '{name_hub}' is already defined."
+                        f"Error in line {count_line}: "
+                        f"Zone '{name_hub}' is already defined."
                     )
 
                 self.data_dict["hubs"][name_hub] = hub_dict
+
                 hubs_names.add(name_hub)
                 coordinates.add(hub_coord)
 
             elif split_line[0] == "connection":
                 if not start_flag:
                     raise MapSyntaxError(
-                        f"Error in line {count_line}: Connections"
-                        " cannot be declared before the start zone is defined."
+                        f"Error in line {count_line}: "
+                        "Connections cannot be declared before "
+                        "the start zone is defined."
                     )
+
                 if not end_flag:
                     raise MapSyntaxError(
-                        f"Error in line {count_line}: Connections cannot be "
-                        "declared before the end zone is defined."
+                        f"Error in line {count_line}: "
+                        "Connections cannot be declared before "
+                        "the end zone is defined."
                     )
+
                 count_line -= 1
                 break
 
             else:
                 raise MapSyntaxError(
-                    f"Error in line {count_line}: Unknown declaration type."
+                    f"Error in line {count_line}: "
+                    "Unknown declaration type."
                 )
+
         if not start_flag:
             raise MapSyntaxError(
-                f"Error in line {count_line}: Start_hub is not defined."
+                "Error: Missing required start_hub declaration."
             )
+
         if not end_flag:
             raise MapSyntaxError(
-                f"Error in line {count_line}: End_hub is not defined."
+                "Error: Missing required end_hub declaration."
             )
+
         return count_line
 
     @staticmethod
     def parse_connection_metadata(
-        data: str, count_line: int
+        data_str: str, count_line: int
                                   ) -> Dict[str, Any]:
         """Parse connection metadata from a line.
 
@@ -324,7 +386,7 @@ class Parser:
         Returns:
             A dictionary containing the connection pair and capacity.
         """
-        data: List[str] = data.split()
+        data: List[str] = data_str.split()
 
         if 1 > len(data) > 2:
             raise MapSyntaxError(
@@ -521,7 +583,8 @@ class Parser:
                 )
                 exit(1)
         if not nb_drones_flag:
-            raise MapSyntaxError(f"Error in line {count_line}: nb_drones are not defined.")
+            raise MapSyntaxError(f"Error in line {count_line}"
+                                 ": nb_drones are not defined.")
         count_line = self.define_hubs(data, count_line)
         self.define_connections(data, count_line)
 

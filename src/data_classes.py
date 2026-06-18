@@ -37,18 +37,26 @@ class GraphData:
     end: Zone
     turns: int = 0
 
-    def move_cost(self, zone):
+    def move_cost(self, zone: Zone) -> int:
         if zone.zone_type == "restricted":
             return 2
         return 1
 
-    def get_neighbor(self, connection, zone):
+    def get_neighbor(
+        self,
+        connection: Connection,
+        zone: Zone
+    ) -> Zone:
         if connection.from_zone == zone:
             return connection.to_zone
         return connection.from_zone
 
-    def get_connections(self, zone):
-        neighbors = []
+    def get_connections(
+        self,
+        zone: Zone
+    ) -> List[Connection]:
+        neighbors: List[Connection] = []
+
         for connect in self.connections:
             if zone == connect.from_zone:
                 neighbors.append(connect)
