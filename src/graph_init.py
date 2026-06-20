@@ -16,13 +16,11 @@ class GraphInit:
     def creat_zone(
         self,
         zone_data: dict,
-        drones: int = 0,
     ) -> Zone:
         """Create a Zone instance from zone data.
 
         Args:
             zone_data: Dictionary containing zone attributes.
-            drones: Number of drones currently located in the zone.
 
         Returns:
             A populated Zone object.
@@ -41,7 +39,6 @@ class GraphInit:
             zone_type,
             color,
             max_drones,
-            drones,
         )
 
     def creat_connection(
@@ -95,16 +92,13 @@ class GraphInit:
         """
         zones: dict[str, Zone] = {}
 
-        nb_drones: int = data_dict["nb_drones"]
-
         start_zone: Zone = self.creat_zone(
-            data_dict["start_hub"],
-            nb_drones,
+            data_dict["start_hub"]
         )
         zones[start_zone.name] = start_zone
 
-        for zone in data_dict["hubs"].values():
-            zone = self.creat_zone(zone)
+        for zone_data in data_dict["hubs"].values():
+            zone: Zone = self.creat_zone(zone_data)
             zones[zone.name] = zone
 
         end_zone: Zone = self.creat_zone(
@@ -123,14 +117,9 @@ class GraphInit:
 
         drones: list[Drone] = []
         for n in range(data_dict["nb_drones"]):
-            drone: Drone = Drone(
-                n,
-                zones[start_zone.name],
-            )
-            drones.append(drone)
+            drones.append(Drone(n))
 
         game_data: GraphData = GraphData(
-            nb_drones,
             drones,
             zones,
             connections,

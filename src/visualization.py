@@ -29,7 +29,8 @@ class DroneVisualizer:
 
         screen_width = tk_root.winfo_screenwidth()
         screen_height = tk_root.winfo_screenheight()
-        tk_root.geometry(f"{screen_width}x{screen_height}+0+0")
+        tk_root.geometry(f"{screen_width}x{screen_height}")
+        tk_root.title("Fly-in")
 
         self.bg_image = mpimg.imread(self.bg_image_path)
 

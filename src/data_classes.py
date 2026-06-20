@@ -10,7 +10,6 @@ class Zone:
     zone_type: str
     color: str | None
     max_drones: int
-    current_drones: int = 0
 
 
 @dataclass
@@ -23,13 +22,11 @@ class Connection:
 @dataclass
 class Drone:
     id_drone: int
-    current_zone: Zone
     path: List[tuple] = field(default_factory=list)
 
 
 @dataclass
 class GraphData:
-    nb_drones: int
     all_drones: List[Drone]
     zones_dict: dict[str, Zone]
     connections: List[Connection]

@@ -52,7 +52,7 @@ class Parser:
 
     @staticmethod
     def parse_hubs_metadata(
-        data_str: str, count_line: int, is_s_or_e: int = 0
+        data_str: str, count_line: int
             ) -> Dict[str, Any]:
         """Parse hub metadata from a zone declaration line.
 
@@ -90,7 +90,6 @@ class Parser:
 
         zone = "normal"
         color = None
-        is_n_define = False
         max_drones = 1
         metadata: List[str] = data[3:]
 
@@ -150,7 +149,6 @@ class Parser:
                 elif key == "max_drones":
                     try:
                         max_drones = Parser.atopi(value)
-                        is_n_define = True
                     except (MapSyntaxError, PositiveInt):
                         raise MapSyntaxError(
                             f"Error in line {count_line}:"
@@ -161,12 +159,6 @@ class Parser:
                         f"Error in line {count_line}:"
                         f" Unknown metadata key '{key}'"
                     )
-        if is_s_or_e and is_n_define:
-            if is_s_or_e > max_drones:
-                raise MapLogic(
-                    f"Error in line {count_line}:"
-                    f" The start hub and end hub can't be less than nb_drones"
-                )
 
         return {
             "name": name,
@@ -227,12 +219,10 @@ class Parser:
                     )
 
                 start_flag += 1
-                max_drones = self.data_dict["nb_drones"]
 
                 self.data_dict["start_hub"] = self.parse_hubs_metadata(
                     split_line[1],
                     count_line,
-                    is_s_or_e=max_drones
                 )
 
                 if self.data_dict["start_hub"]["zone"] == "blocked":
@@ -240,6 +230,12 @@ class Parser:
                         f"Error in line {count_line}: "
                         "The start_hub cannot be blocked."
                     )
+
+                max_drones = self.data_dict["start_hub"]["max_drones"]
+                nb_drones = self.data_dict["nb_drones"]
+
+                if max_drones < nb_drones:
+                    self.data_dict["start_hub"]["max_drones"] = nb_drones
 
                 start_name = self.data_dict["start_hub"]["name"]
                 x = self.data_dict["start_hub"]["x"]
@@ -272,11 +268,9 @@ class Parser:
 
                 end_flag += 1
 
-                max_drones = self.data_dict["nb_drones"]
                 self.data_dict["end_hub"] = self.parse_hubs_metadata(
                     split_line[1],
                     count_line,
-                    is_s_or_e=max_drones
                 )
 
                 if self.data_dict["end_hub"]["zone"] == "blocked":
@@ -284,6 +278,12 @@ class Parser:
                         f"Error in line {count_line}: "
                         "The end_hub cannot be blocked."
                     )
+
+                nb_drones = self.data_dict["nb_drones"]
+                max_drones = self.data_dict["end_hub"]["max_drones"]
+
+                if max_drones < nb_drones:
+                    self.data_dict["end_hub"]["max_drones"] = nb_drones
 
                 end_name = self.data_dict["end_hub"]["name"]
                 x = self.data_dict["end_hub"]["x"]
@@ -513,6 +513,8 @@ class Parser:
                 metadata["connection"][0] not in valid_hubs
                 or metadata["connection"][1] not in valid_hubs
             ):
+                print(metadata["connection"][1])
+                print(metadata["connection"][0])
                 raise UndefineHub(
                     f"Error in line {count_line}: "
                     "Connection references an undefined zone."

@@ -1,27 +1,24 @@
-Map = ""
+Map = "maps/easy/01_linear_path.txt"
 
 install:
-	uv sync
+	@uv sync
 
 run:
-	@if [ -z "$(Map)" ]; then \
-		echo "Usage: make run MAP=maps/map1.txt"; \
-		exit 1; \
-	fi
-	uv run python3 -m src $(Map)
+	@uv run python3 -m src $(Map)
 
 debug:
-	python3 -m pdb main.py
+	@python3 -m pdb main.py
 
 clean:
-	rm -rf src/__pycache__
-	rm -rf __pycache__
-	rm -rf src/.mypy_cache
-	rm -rf .mypy_cache
+	@rm -rf src/__pycache__
+	@rm -rf __pycache__
+	@rm -rf src/.mypy_cache
+	@rm -rf .mypy_cache
 
 lint:
-	flake8 ./src
-	mypy ./src \
+	@flake8 ./src
+	
+	@mypy ./src \
 		--warn-return-any \
 		--warn-unused-ignores \
 		--ignore-missing-imports \

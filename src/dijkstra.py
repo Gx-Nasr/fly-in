@@ -19,6 +19,21 @@ class PathFinding:
         self.zone_reservations: Dict[Tuple[str, int], int] = {}
         self.capacity_reservations: Dict[Tuple[str, str, int], int] = {}
 
+    def are_valid_neighbors(
+            self, connections: List[Connection], zone: Zone, if_s: int = 0
+            ) -> bool:
+
+        nb_blocked: int = 0
+        for connection in connections:
+            neighbor = self.graph.get_neighbor(connection, zone)
+            if neighbor.zone_type == "blocked":
+                nb_blocked += 1
+        nb_connections = len(connections) - if_s
+
+        if nb_blocked == nb_connections:
+            return False
+        return True
+
     def dijkstra(self) -> Optional[List[Tuple[Zone, int]]]:
         """Compute the next valid path from start to end.
 
@@ -70,13 +85,17 @@ class PathFinding:
                 path.reverse()
                 return path
 
-            wait_turn: int = current_turn + 1
+            connections: List[Connection] = (
+                self.graph.get_connections(current_zone)
+            )
 
+            wait_turn: int = current_turn + 1
+            n = 0
+            if state[0] != self.start:
+                n = 1
             if (
-                current_zone == self.start
-                or self.zone_reservations.get(
-                    (current_zone.name, wait_turn), 0
-                ) < current_zone.max_drones
+                self.are_valid_neighbors(connections, state[0], n)
+                and len(connections) - n != 0
             ):
                 wait_state: Tuple[Zone, int] = (
                     current_zone,
@@ -91,10 +110,8 @@ class PathFinding:
                         pq,
                         (wait_turn, 1, counter, wait_state)
                     )
-
-            connections: List[Connection] = (
-                self.graph.get_connections(current_zone)
-            )
+            else:
+                object.__setattr__(state[0], "zone_type", "blocked")
 
             for connection in connections:
                 neighbor: Zone = self.graph.get_neighbor(
@@ -268,5 +285,3 @@ class PathFinding:
         self.graph.turns = self.print_output(
             self.graph.all_drones
         )
-
-        self.graph.turns = self.print_output(self.graph.all_drones)
