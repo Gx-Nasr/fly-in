@@ -128,6 +128,11 @@ class Parser:
                 used_keys.add(key)
 
                 if key == "color":
+                    if "[" in key or "]" in key:
+                        raise MapSyntaxError(
+                            f"Error in line {count_line}:"
+                            f" malformed brackets '{key}'"
+                        )
                     color = value
 
                 elif key == "zone":
