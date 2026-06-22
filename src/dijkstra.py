@@ -19,6 +19,36 @@ class PathFinding:
         self.zone_reservations: Dict[Tuple[str, int], int] = {}
         self.capacity_reservations: Dict[Tuple[str, str, int], int] = {}
 
+    def has_path(self) -> bool:
+        stack = [self.start]
+        visited = []
+
+        while stack:
+            current_zone = stack.pop()
+
+            if current_zone == self.end:
+                return True
+
+            if current_zone.name in visited:
+                continue
+
+            visited.append(current_zone.name)
+
+            for connection in self.graph.get_connections(current_zone):
+
+                neighbor = self.graph.get_neighbor(
+                    connection,
+                    current_zone
+                )
+
+                if neighbor.zone_type == "blocked":
+                    continue
+
+                if neighbor.name not in visited:
+                    stack.append(neighbor)
+
+        return False
+
     def are_valid_neighbors(
             self, connections: List[Connection], zone: Zone, if_s: int = 0
             ) -> bool:
@@ -270,6 +300,10 @@ class PathFinding:
 
     def get_drones_path(self) -> None:
         """Compute and reserve paths for all drones."""
+        if not self.has_path():
+            raise NoPathFinde(
+                "We can't find the path check your map are valid"
+            )
 
         for drone in self.graph.all_drones:
             path = self.dijkstra()
