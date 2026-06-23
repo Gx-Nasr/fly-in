@@ -1,4 +1,4 @@
-from .data_classes import Zone, Drone, Connection, GraphData
+from data_classes import Zone, Drone, Connection, GraphData
 
 
 class GraphInit:
@@ -29,7 +29,7 @@ class GraphInit:
         x: int = zone_data["x"]
         y: int = zone_data["y"]
         zone_type: str = zone_data["zone"]
-        color: str | None = zone_data["color"]
+        color: str = zone_data["color"]
         max_drones: int = zone_data["max_drones"]
 
         return Zone(
@@ -55,8 +55,8 @@ class GraphInit:
         Returns:
             A Connection instance linking two zones.
         """
-        from_zone: str | Zone = connection_data["connection"][0]
-        to_zone: str | Zone = connection_data["connection"][1]
+        from_zone: Zone = connection_data["connection"][0]
+        to_zone: Zone = connection_data["connection"][1]
         max_link_capacity: int = connection_data["max_link_capacity"]
 
         for zone in zones.values():

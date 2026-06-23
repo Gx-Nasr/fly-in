@@ -4,21 +4,19 @@ install:
 	@uv sync
 
 run:
-	@uv run python3 -m src $(Map)
+	@uv run python3 main.py $(Map)
 
 debug:
 	@python3 -m pdb main.py
 
 clean:
-	@rm -rf src/__pycache__
 	@rm -rf __pycache__
-	@rm -rf src/.mypy_cache
 	@rm -rf .mypy_cache
 
 lint:
-	@flake8 ./src
+	@flake8 *.py
 	
-	@mypy ./src \
+	@mypy *.py \
 		--warn-return-any \
 		--warn-unused-ignores \
 		--ignore-missing-imports \

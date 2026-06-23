@@ -1,7 +1,7 @@
 import heapq
 from typing import Dict, List, Optional, Set, Tuple
-from .Errors import NoPathFinde
-from .data_classes import Connection, Drone, GraphData, Zone
+from Errors import NoPathFinde
+from data_classes import Connection, Drone, GraphData, Zone
 
 
 class PathFinding:
@@ -20,6 +20,10 @@ class PathFinding:
         self.capacity_reservations: Dict[Tuple[str, str, int], int] = {}
 
     def has_path(self) -> bool:
+        """Check whether a path exists from the start zone to the end zone.
+
+        Returns True if the end zone is reachable, otherwise False.
+        """
         stack = [self.start]
         visited = []
 

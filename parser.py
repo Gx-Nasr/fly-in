@@ -1,6 +1,6 @@
 import sys
 from typing import Any, Dict, List, Set, Tuple
-from .Errors import MapSyntaxError, PositiveInt, \
+from Errors import MapSyntaxError, PositiveInt, \
                     DuplicatHub, DuplicatCoord, MapLogic, \
                     ZoneTypesError, UndefineHub, DuplicatConnection
 
@@ -89,7 +89,7 @@ class Parser:
             )
 
         zone = "normal"
-        color = None
+        color = "default"
         max_drones = 1
         metadata: List[str] = data[3:]
 

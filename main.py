@@ -1,8 +1,8 @@
-from .parser import Parser
-from .graph_init import GraphInit
-from .dijkstra import PathFinding
+from parser import Parser
+from graph_init import GraphInit
+from dijkstra import PathFinding
 import sys
-from .visualization import DroneVisualizer
+from visualization import DroneVisualizer
 
 
 class Fly_In:

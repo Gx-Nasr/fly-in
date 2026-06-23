@@ -8,7 +8,7 @@ class Zone:
     x: int
     y: int
     zone_type: str
-    color: str | None
+    color: str
     max_drones: int
 
 
