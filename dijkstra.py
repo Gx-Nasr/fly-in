@@ -53,21 +53,6 @@ class PathFinding:
 
         return False
 
-    def are_valid_neighbors(
-            self, connections: List[Connection], zone: Zone, if_s: int = 0
-            ) -> bool:
-
-        nb_blocked: int = 0
-        for connection in connections:
-            neighbor = self.graph.get_neighbor(connection, zone)
-            if neighbor.zone_type == "blocked":
-                nb_blocked += 1
-        nb_connections = len(connections) - if_s
-
-        if nb_blocked == nb_connections:
-            return False
-        return True
-
     def dijkstra(self) -> Optional[List[Tuple[Zone, int]]]:
         """Compute the next valid path from start to end.
 
@@ -123,30 +108,7 @@ class PathFinding:
                 self.graph.get_connections(current_zone)
             )
 
-            wait_turn: int = current_turn + 1
-            n = 0
-            if state[0] != self.start:
-                n = 1
-            if (
-                self.are_valid_neighbors(connections, state[0], n)
-                and len(connections) - n != 0
-            ):
-                wait_state: Tuple[Zone, int] = (
-                    current_zone,
-                    wait_turn
-                )
-
-                if distances.get(wait_state, -1) == -1:
-                    distances[wait_state] = wait_turn
-                    parent[wait_state] = state
-                    counter += 1
-                    heapq.heappush(
-                        pq,
-                        (wait_turn, 1, counter, wait_state)
-                    )
-            else:
-                object.__setattr__(state[0], "zone_type", "blocked")
-
+            can_wait = False
             for connection in connections:
                 neighbor: Zone = self.graph.get_neighbor(
                     connection,
@@ -155,6 +117,8 @@ class PathFinding:
 
                 if neighbor.zone_type == "blocked":
                     continue
+
+                can_wait = True
 
                 cost: int = self.graph.move_cost(neighbor)
                 turns: int = current_turn + cost
@@ -225,6 +189,22 @@ class PathFinding:
                             counter,
                             next_state
                         )
+                    )
+
+            wait_turn: int = current_turn + 1
+            if can_wait:
+                wait_state: Tuple[Zone, int] = (
+                    current_zone,
+                    wait_turn
+                )
+
+                if distances.get(wait_state, -1) == -1:
+                    distances[wait_state] = wait_turn
+                    parent[wait_state] = state
+                    counter += 1
+                    heapq.heappush(
+                        pq,
+                        (wait_turn, 1, counter, wait_state)
                     )
 
         return None
