@@ -1,208 +1,171 @@
-*This project has been created as part of the 42 curriculum by nel-adao.*
+# Fly-In
 
-# Description
+A Python-based drone routing simulator that parses custom map definitions, validates zone and connection constraints, computes reservation-aware shortest paths for multiple drones, and visualizes route execution.
 
-## Project Overview
+---
 
-Fly-in is a drone routing and traffic control simulation project.
+## Overview
 
-The goal of the project is to find valid paths for multiple drones travelling from a start hub to an end hub while respecting several traffic constraints such as:
+Fly-In is a drone traffic control project designed to solve multi-agent route planning across custom graph-style maps. It reads map files that define start/end hubs, intermediate zones, connection capacities, and zone restrictions, then computes safe, conflict-free paths for a fleet of drones.
 
-* Hub capacity (`max_drones`)
-* Connection capacity (`max_link_capacity`)
-* Restricted zones
-* Blocked zones
-* Priority zones
+This project exists to demonstrate:
 
-The program parses a map description file, validates its syntax and logic, computes paths for all drones using a reservation-based pathfinding algorithm, and displays both a textual and graphical representation of the simulation.
+- pathfinding with capacity and timing constraints
+- map validation for syntactic and logical consistency
+- reservation-aware multi-drone scheduling
+- zone type impacts like blocked, restricted, and priority nodes
+- route visualization using `matplotlib`
 
-## Main Features
+Fly-In is useful for exploring algorithm design in logistics, traffic control, and autonomous routing problems.
 
-* Custom map parser with detailed error handling.
-* Validation of map syntax and logical constraints.
-* Multi-drone pathfinding.
-* Reservation system to avoid collisions.
-* Support for special zone types:
+---
 
-  * normal
-  * restricted
-  * blocked
-  * priority
-* Interactive visualization using Matplotlib.
-* Turn-by-turn drone movement simulation.
+## Architecture
 
-# Instructions
+Fly-In is organized into clear, single-purpose modules:
 
-## Installation
+- `main.py` — Application entry point that orchestrates parsing, graph construction, pathfinding, and visualization.
+- `parser.py` — Reads the input map file, validates syntax and logic, and builds a normalized data model.
+- `graph_init.py` — Converts parsed map data into typed domain objects and assembles the full graph.
+- `dijkstra.py` — Implements a reservation-aware Dijkstra search for computing drone paths with capacity and timing constraints.
+- `data_classes.py` — Defines core domain models: `Zone`, `Connection`, `Drone`, and `GraphData`.
+- `visualization.py` — Renders the drone graph and dynamic positions with `matplotlib` and provides turn-by-turn navigation.
+- `Errors.py` — Custom exception classes for precise error handling during parsing and pathfinding.
 
-Create a virtual environment and install dependencies:
+<p align="center">
+  <img src="./readme_img/img.png" width="700">
+</p>
 
-```bash
-uv sync
+### Key concepts
+
+- **Map-based graph modeling**: Zones and hubs become nodes, connections become edges.
+- **Reservation-aware pathfinding**: The algorithm tracks zone and link occupancy across time steps.
+- **Zone metadata**: Nodes support `color`, `zone` type, and `max_drones` capacity.
+- **Connection capacity**: Edges may specify `max_link_capacity` to limit simultaneous crossing.
+- **Turn-based visualization**: `matplotlib` shows drone positions and enables left/right navigation between turns.
+
+---
+
+## Features
+
+- multi-drone routing from a start hub to an end hub
+- map syntax validation for zone declarations, connections, and metadata
+- support for zone types: `normal`, `blocked`, `restricted`, and `priority`
+- support for connection capacity constraints
+- avoidance of duplicate hubs, coordinates, and connections
+- error reporting with line-number-aware diagnostics
+- interactive visualization of drone movement
+
+---
+
+## Map Format
+
+Map files are plain text and use a simple declarative format.
+
+Example structure:
+
+```text
+nb_drones: 2
+
+start_hub: start 0 0 [color=green]
+hub: waypoint1 1 0 [color=blue]
+hub: waypoint2 2 0 [color=blue]
+end_hub: goal 3 0 [color=red]
+
+connection: start-waypoint1
+connection: waypoint1-waypoint2
+connection: waypoint2-goal
 ```
 
-or
+Supported declarations:
+
+- `nb_drones:<positive_integer>`
+- `start_hub:<name> <x> <y> [metadata]`
+- `hub:<name> <x> <y> [metadata]`
+- `end_hub:<name> <x> <y> [metadata]`
+- `connection:<zoneA>-<zoneB> [metadata]`
+
+Supported metadata keys:
+
+- `color=<value>`
+- `zone=<normal|blocked|restricted|priority>`
+- `max_drones=<positive_integer>`
+- `max_link_capacity=<positive_integer>`
+
+Comments are supported using `#`, and empty lines are ignored.
+
+---
+
+## Usage
+
+### Run with a sample map
 
 ```bash
-make install
+python3 main.py maps/easy/01_linear_path.txt
 ```
 
-## Run
+### Use the included Makefile
 
 ```bash
-make run MAP=maps/example.txt
+make run
 ```
 
-## Debug
+To change the map used by `make run`, edit the `Map` variable in `Makefile`.
 
-```bash
-make debug MAP=maps/example.txt
-```
+---
 
-## Lint
+## Dependencies
+
+- Python `>=3.14`
+- `matplotlib` for visualization
+- `flake8` for linting
+- `mypy` for static type checking
+
+The dependencies are declared in `pyproject.toml`.
+
+---
+
+## Development
+
+Run linting and static type checks with:
 
 ```bash
 make lint
 ```
 
-Optional strict mode:
-
-```bash
-make lint-strict
-```
-
-## Clean Cache Files
+Clean build artifacts:
 
 ```bash
 make clean
 ```
 
-# Algorithm Choices and Implementation Strategy
+Debug the application:
 
-## Pathfinding
-
-The project uses a modified Dijkstra algorithm.
-
-Unlike a traditional shortest-path search, each state contains:
-
-```text
-(zone, turn)
+```bash
+make debug
 ```
 
-instead of only:
+---
 
-```text
-(zone)
-```
+## Folder Structure
 
-This allows the algorithm to reason about time and drone reservations.
+- `main.py` — launcher
+- `parser.py` — input parser and validator
+- `graph_init.py` — graph builder and domain model assembler
+- `dijkstra.py` — path search and reservation logic
+- `data_classes.py` — typed data models
+- `visualization.py` — simulation rendering
+- `Errors.py` — custom exceptions
+- `maps/` — sample scenario definitions
+- `readme_img/` — README image resource
+- `images/` — visualization background assets
 
-### Reservation System
+---
 
-After a drone path is found:
+## Notes
 
-* Every occupied zone is reserved.
-* Every traversed connection is reserved.
-* Future drones must respect these reservations.
+- The current implementation focuses on deterministic route planning, not real-time drone control.
+- `blocked` zones are excluded from route computation.
+- `restricted` zones cost extra turns to pass, while `priority` zones are favored when paths tie.
 
-This prevents collisions and ensures that hub and connection capacities are never exceeded.
-
-### Zone Types
-
-#### Normal
-
-Standard movement cost:
-
-```text
-cost = 1
-```
-
-#### Restricted
-
-Entering the zone requires:
-
-```text
-cost = 2
-```
-
-which simulates slower traversal.
-
-#### Blocked
-
-The zone cannot be traversed.
-
-#### Priority
-
-Priority zones receive a better exploration priority during pathfinding.
-
-# Visual Representation
-
-The project includes a graphical visualization built with Matplotlib.
-
-## Features
-
-* Background map image.
-* Display of all hubs and connections.
-* Color-coded zones.
-* Interactive drone visualization.
-* Turn-by-turn navigation using keyboard controls.
-* Full-screen display mode.
-
-## User Experience Benefits
-
-The visual interface makes it easier to:
-
-* Understand drone movements.
-* Observe congestion points.
-* Verify pathfinding results.
-* Debug routing behavior.
-* Analyze traffic flow over time.
-
-Compared to textual output alone, the visualization provides a more intuitive understanding of how drones interact with the environment.
-
-# Resources
-
-## Documentation
-
-* Python Documentation
-  https://docs.python.org/3/
-
-* Dataclasses Documentation
-  https://docs.python.org/3/library/dataclasses.html
-
-* Heap Queue (heapq) Documentation
-  https://docs.python.org/3/library/heapq.html
-
-* Matplotlib Documentation
-  https://matplotlib.org/stable/
-
-## Tutorials
-
-* Dijkstra Algorithm Tutorial
-  https://youtu.be/EFg3u_E6eHU
-
-* Graph Theory and Pathfinding Tutorial
-  https://youtu.be/XB4MIexjvY0
-
-## Peer Learning
-
-Several implementation ideas and project discussions were improved through peer learning sessions with other 42 students, particularly regarding:
-
-* Parser validation strategies
-* Pathfinding logic
-* Reservation management
-* Visualization design
-
-## AI Usage
-
-AI tools were used as learning assistants during the project.
-
-Their usage was limited to:
-
-* Understanding project requirements.
-* Exploring different implementation approaches.
-* Generating parser test cases.
-* Reviewing documentation and explanations of Python concepts.
-* Identifying potential edge cases during development.
-
-All project architecture, implementation, debugging, and final design decisions were performed manually by the project author.
+> This README documents the existing implementation and usage without assuming any features beyond the current repository.

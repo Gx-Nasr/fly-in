@@ -518,8 +518,6 @@ class Parser:
                 metadata["connection"][0] not in valid_hubs
                 or metadata["connection"][1] not in valid_hubs
             ):
-                print(metadata["connection"][1])
-                print(metadata["connection"][0])
                 raise UndefineHub(
                     f"Error in line {count_line}: "
                     "Connection references an undefined zone."
